@@ -16,4 +16,4 @@ echo -e "${GREEN}=== Настройка fail2ban ===${NC}"
 systemctl enable --now fail2ban
 
 echo -e "${GREEN}=== Установка BBR и оптимизация TCP/UDP ===${NC}"
-wget -O bbr-custom.sh https://raw.githubusercontent.com/ТВОЙ_ЮЗЕР/vps-setup/main/bbr-custom.sh && bash bbr-custom.sh
+wget -O bbr-custom.sh https://raw.githubusercontent.com/raptortal/vps-setup/main/bbr-custom.sh && bash bbr-custom.sh
