@@ -1,18 +1,29 @@
 #!/bin/bash
 
 GREEN='\033[0;32m'
+RED='\033[0;31m'
 NC='\033[0m'
-
-
-echo -e "${GREEN}=== Смена пароля root ===${NC}"
-echo "Введите новый пароль для root:"
-read -s ROOT_PASS < /dev/tty
-echo
-echo "root:$ROOT_PASS" | chpasswd
-echo "Пароль изменён"
 
 echo -e "${GREEN}=== Подготовка системы ===${NC}"
 apt update && apt install -y wget curl
+
+echo -e "${GREEN}=== Смена пароля root ===${NC}"
+while true; do
+    echo "Введите новый пароль для root:"
+    read -s ROOT_PASS < /dev/tty
+    echo
+    echo "Повторите пароль:"
+    read -s ROOT_PASS2 < /dev/tty
+    echo
+
+    if [ "$ROOT_PASS" = "$ROOT_PASS2" ]; then
+        echo "root:$ROOT_PASS" | chpasswd
+        echo -e "${GREEN}Пароль изменён${NC}"
+        break
+    else
+        echo -e "${RED}Пароли не совпадают, попробуйте снова${NC}"
+    fi
+done
 
 echo -e "${GREEN}=== Обновление системы ===${NC}"
 apt update && apt upgrade -y
@@ -25,3 +36,13 @@ systemctl enable --now fail2ban
 
 echo -e "${GREEN}=== Установка BBR и оптимизация TCP/UDP ===${NC}"
 wget -O bbr-custom.sh https://raw.githubusercontent.com/raptortal/vps-setup/refs/heads/main/bbr-custom.sh && bash bbr-custom.sh
+
+echo -e "${GREEN}=== Установка завершена ===${NC}"
+echo "Перезагрузить сервер сейчас? (y/n):"
+read -r REBOOT < /dev/tty
+if [ "$REBOOT" = "y" ] || [ "$REBOOT" = "Y" ]; then
+    echo "Перезагрузка..."
+    reboot
+else
+    echo "Перезагрузка отменена. Рекомендуется перезагрузить позже командой: reboot"
+fi
