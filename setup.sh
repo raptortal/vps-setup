@@ -8,22 +8,28 @@ echo -e "${GREEN}=== Подготовка системы ===${NC}"
 apt update && apt install -y wget curl
 
 echo -e "${GREEN}=== Смена пароля root ===${NC}"
-while true; do
-    echo "Введите новый пароль для root:"
-    read -s ROOT_PASS < /dev/tty
-    echo
-    echo "Повторите пароль:"
-    read -s ROOT_PASS2 < /dev/tty
-    echo
+echo "Сменить пароль root? (y/n):"
+read -r CHANGE_PASS < /dev/tty
+if [ "$CHANGE_PASS" = "y" ] || [ "$CHANGE_PASS" = "Y" ]; then
+    while true; do
+        echo "Введите новый пароль для root:"
+        read -s ROOT_PASS < /dev/tty
+        echo
+        echo "Повторите пароль:"
+        read -s ROOT_PASS2 < /dev/tty
+        echo
 
-    if [ "$ROOT_PASS" = "$ROOT_PASS2" ]; then
-        echo "root:$ROOT_PASS" | chpasswd
-        echo -e "${GREEN}Пароль изменён${NC}"
-        break
-    else
-        echo -e "${RED}Пароли не совпадают, попробуйте снова${NC}"
-    fi
-done
+        if [ "$ROOT_PASS" = "$ROOT_PASS2" ]; then
+            echo "root:$ROOT_PASS" | chpasswd
+            echo -e "${GREEN}Пароль изменён${NC}"
+            break
+        else
+            echo -e "${RED}Пароли не совпадают, попробуйте снова${NC}"
+        fi
+    done
+else
+    echo "Смена пароля пропущена"
+fi
 
 echo -e "${GREEN}=== Обновление системы ===${NC}"
 apt update && apt upgrade -y
