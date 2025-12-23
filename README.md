@@ -6,6 +6,7 @@
 
 ```bash
 wget -O- https://raw.githubusercontent.com/raptortal/vps-setup/main/setup.sh | bash
+```
 
 > ⚠️ **Внимание:** Скрипт предложит сменить пароль для пользователя root (можно пропустить)
 
