@@ -4,9 +4,6 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${GREEN}=== Подготовка системы ===${NC}"
-apt update && apt install -y wget curl
-
 echo -e "${GREEN}=== Смена пароля root ===${NC}"
 echo "Сменить пароль root? (y/n):"
 read -r CHANGE_PASS < /dev/tty
