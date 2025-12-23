@@ -8,6 +8,8 @@
 ```bash
 apt update && apt install -y wget
 ```
+
+Затем запустите:
 ```bash
 wget -O- https://raw.githubusercontent.com/raptortal/vps-setup/main/setup.sh | bash
 ```
