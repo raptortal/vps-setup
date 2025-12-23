@@ -3,8 +3,6 @@
 GREEN='\033[0;32m'
 NC='\033[0m'
 
-echo -e "${GREEN}=== Подготовка системы ===${NC}"
-apt update && apt install -y wget curl
 
 echo -e "${GREEN}=== Смена пароля root ===${NC}"
 echo "Введите новый пароль для root:"
@@ -12,6 +10,9 @@ read -s ROOT_PASS < /dev/tty
 echo
 echo "root:$ROOT_PASS" | chpasswd
 echo "Пароль изменён"
+
+echo -e "${GREEN}=== Подготовка системы ===${NC}"
+apt update && apt install -y wget curl
 
 echo -e "${GREEN}=== Обновление системы ===${NC}"
 apt update && apt upgrade -y
