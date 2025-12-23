@@ -46,7 +46,7 @@ wget -O- https://raw.githubusercontent.com/raptortal/vps-setup/main/setup.sh | b
 
 ## 💻 Требования
 
-- Ubuntu 20.04 / 22.04 / 24.04
+- Ubuntu 20.04 / 22.04 / 24.04 +
 - Права root
 
 ---
