@@ -32,7 +32,7 @@ echo -e "${GREEN}=== Обновление системы ===${NC}"
 apt update && apt upgrade -y
 
 echo -e "${GREEN}=== Установка утилит ===${NC}"
-apt install -y speedtest-cli mtr nano htop traceroute iftop nmap fail2ban
+apt install -y speedtest-cli mtr nano htop traceroute iftop nmap curl lsof whois mc fail2ban
 
 echo -e "${GREEN}=== Настройка fail2ban ===${NC}"
 systemctl enable --now fail2ban
