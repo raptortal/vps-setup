@@ -37,10 +37,29 @@ apt install -y speedtest-cli mtr nano htop traceroute iftop nmap curl lsof whois
 echo -e "${GREEN}=== Настройка fail2ban ===${NC}"
 systemctl enable --now fail2ban
 
+
+echo -e "${GREEN}=== Создание swap (1GB) ===${NC}"
+if [ "$(swapon --show | wc -l)" -gt 0 ]; then
+    echo "Swap уже активен, пропускаем"
+else
+    fallocate -l 1G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    if ! grep -q "/swapfile" /etc/fstab; then
+        echo "/swapfile none swap sw 0 0" >> /etc/fstab
+    fi
+    echo -e "${GREEN}Swap создан и добавлен в fstab${NC}"
+fi
+
+
 echo -e "${GREEN}=== Установка BBR и оптимизация TCP/UDP ===${NC}"
 wget -O bbr-custom.sh https://raw.githubusercontent.com/raptortal/vps-setup/refs/heads/main/bbr-custom.sh && bash bbr-custom.sh
 
 echo -e "${GREEN}=== Установка завершена ===${NC}"
+
+
+
 echo "Перезагрузить сервер сейчас? (y/n):"
 read -r REBOOT < /dev/tty
 if [ "$REBOOT" = "y" ] || [ "$REBOOT" = "Y" ]; then
