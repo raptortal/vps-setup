@@ -31,6 +31,9 @@ ask_yn() {
   local prompt="$1"
   local answer=""
   
+  # Переоткрываем терминал перед каждым вопросом
+  exec </dev/tty
+  
   while true; do
     printf "%s (y/n): " "$prompt"
     read_clean answer
@@ -92,7 +95,7 @@ fi
 
 echo -e "${GREEN}=== Установка BBR и оптимизация TCP/UDP ===${NC}"
 wget -qO /tmp/bbr-custom.sh https://raw.githubusercontent.com/raptortal/vps-setup/main/bbr-custom.sh
-bash /tmp/bbr-custom.sh
+bash /tmp/bbr-custom.sh </dev/null
 
 echo -e "${GREEN}=== Установка завершена ===${NC}"
 
