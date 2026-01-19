@@ -5,24 +5,21 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-# читаем ввод именно с терминала, даже если скрипт запущен как: wget -O- ... | bash
 TTY_IN="/dev/tty"
 
 read_tty() {
-  # usage: read_tty varname
   local __var="$1"
   local __val=""
   if [[ -r "$TTY_IN" ]]; then
     IFS= read -r __val < "$TTY_IN" || __val=""
   else
-    # если совсем нет tty (редко при ssh), пробуем stdin
     IFS= read -r __val || __val=""
   fi
+  __val="${__val%$'\r'}"
   printf -v "$__var" '%s' "$__val"
 }
 
 read_tty_silent() {
-  # usage: read_tty_silent varname
   local __var="$1"
   local __val=""
   if [[ -r "$TTY_IN" ]]; then
@@ -32,18 +29,26 @@ read_tty_silent() {
     IFS= read -r -s __val || __val=""
     echo
   fi
+  __val="${__val%$'\r'}"
   printf -v "$__var" '%s' "$__val"
 }
 
 ask_yn() {
-  # usage: ask_yn "Вопрос"
   local prompt="$1"
   local ans=""
   while true; do
-    echo -n "$prompt (y/n): "
-    read_tty ans
-    ans=$(printf '%s' "$ans" | tr -d '\r' | xargs)
-    ans=${ans:0:1}
+    echo -ne "$prompt (y/n): "
+
+    if [[ -r "$TTY_IN" ]]; then
+      IFS= read -r -n 1 ans < "$TTY_IN" || ans=""
+      # дочитать остаток строки (Enter), чтобы не оставалось в буфере
+      IFS= read -r _ < "$TTY_IN" || true
+    else
+      IFS= read -r -n 1 ans || ans=""
+      IFS= read -r _ || true
+    fi
+
+    echo
     case "$ans" in
       y|Y) return 0 ;;
       n|N) return 1 ;;
