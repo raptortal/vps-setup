@@ -5,12 +5,13 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-# Функция для чтения с очисткой буфера
+# Принудительно читаем с терминала
+exec </dev/tty
+
 read_clean() {
   local __var="$1"
   local __val=""
-  IFS= read -r __val <&0 || __val=""
-  # Удаляем \r и лишние пробелы
+  IFS= read -r __val || __val=""
   __val="${__val//$'\r'/}"
   __val="${__val#"${__val%%[![:space:]]*}"}"
   __val="${__val%"${__val##*[![:space:]]}"}"
@@ -20,7 +21,7 @@ read_clean() {
 read_silent() {
   local __var="$1"
   local __val=""
-  IFS= read -r -s __val <&0 || __val=""
+  IFS= read -r -s __val || __val=""
   echo
   __val="${__val//$'\r'/}"
   printf -v "$__var" '%s' "$__val"
@@ -30,14 +31,11 @@ ask_yn() {
   local prompt="$1"
   local answer=""
   
-  # Очищаем буфер ввода перед вопросом
-  while read -r -t 0.1 2>/dev/null; do :; done
-  
   while true; do
     printf "%s (y/n): " "$prompt"
     read_clean answer
     
-    case "${answer,,}" in  # ${answer,,} - lowercase
+    case "${answer,,}" in
       y|yes) return 0 ;;
       n|no) return 1 ;;
       *) echo "Введите y или n" ;;
@@ -45,7 +43,6 @@ ask_yn() {
   done
 }
 
-# Главный блок - убираем exec </dev/tty, используем stdin напрямую
 echo -e "${GREEN}Смена пароля root${NC}"
 if ask_yn "Сменить пароль root?"; then
   while true; do
@@ -94,8 +91,8 @@ else
 fi
 
 echo -e "${GREEN}=== Установка BBR и оптимизация TCP/UDP ===${NC}"
-wget -O bbr-custom.sh https://raw.githubusercontent.com/raptortal/vps-setup/refs/heads/main/bbr-custom.sh
-bash bbr-custom.sh
+wget -qO /tmp/bbr-custom.sh https://raw.githubusercontent.com/raptortal/vps-setup/main/bbr-custom.sh
+bash /tmp/bbr-custom.sh
 
 echo -e "${GREEN}=== Установка завершена ===${NC}"
 
