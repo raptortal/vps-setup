@@ -10,11 +10,13 @@ TTY_IN="/dev/tty"
 read_tty() {
   local __var="$1"
   local __val=""
+
   if [[ -r "$TTY_IN" ]]; then
     IFS= read -r __val < "$TTY_IN" || __val=""
   else
     IFS= read -r __val || __val=""
   fi
+
   __val="${__val%$'\r'}"
   printf -v "$__var" '%s' "$__val"
 }
@@ -22,6 +24,7 @@ read_tty() {
 read_tty_silent() {
   local __var="$1"
   local __val=""
+
   if [[ -r "$TTY_IN" ]]; then
     IFS= read -r -s __val < "$TTY_IN" || __val=""
     echo
@@ -29,6 +32,7 @@ read_tty_silent() {
     IFS= read -r -s __val || __val=""
     echo
   fi
+
   __val="${__val%$'\r'}"
   printf -v "$__var" '%s' "$__val"
 }
@@ -36,16 +40,18 @@ read_tty_silent() {
 ask_yn() {
   local prompt="$1"
   local line=""
+
   while true; do
     echo -ne "$prompt (y/n): "
+
     if [[ -r "$TTY_IN" ]]; then
       IFS= read -r line < "$TTY_IN" || line=""
     else
       IFS= read -r line || line=""
     fi
 
-    line="${line%$'\r'}" # убрать CR (Windows)
-    # trim left
+    # убрать CR (Windows) и пробелы
+    line="${line%$'\r'}"
     line="${line#"${line%%[![:space:]]*}"}"
     line="${line:0:1}"
 
