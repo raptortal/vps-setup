@@ -35,21 +35,21 @@ read_tty_silent() {
 
 ask_yn() {
   local prompt="$1"
-  local ans=""
+  local line=""
   while true; do
     echo -ne "$prompt (y/n): "
-
     if [[ -r "$TTY_IN" ]]; then
-      IFS= read -r -n 1 ans < "$TTY_IN" || ans=""
-      # дочитать остаток строки (Enter), чтобы не оставалось в буфере
-      IFS= read -r _ < "$TTY_IN" || true
+      IFS= read -r line < "$TTY_IN" || line=""
     else
-      IFS= read -r -n 1 ans || ans=""
-      IFS= read -r _ || true
+      IFS= read -r line || line=""
     fi
 
-    echo
-    case "$ans" in
+    line="${line%$'\r'}" # убрать CR (Windows)
+    # trim left
+    line="${line#"${line%%[![:space:]]*}"}"
+    line="${line:0:1}"
+
+    case "$line" in
       y|Y) return 0 ;;
       n|N) return 1 ;;
       *) echo "Введите y или n" ;;
@@ -87,20 +87,20 @@ echo -e "${GREEN}=== Обновление системы ===${NC}"
 apt update && apt upgrade -y
 
 echo -e "${GREEN}=== Установка утилит ===${NC}"
-apt install -y speedtest-cli mtr nano htop traceroute iftop nmap curl lsof whois mc fail2ban
+apt install -y speedtest-cli mtr nano htop traceroute iftop nmap curl lsof whois mc fail2ban wget
 
 echo -e "${GREEN}=== Настройка fail2ban ===${NC}"
 systemctl enable --now fail2ban
 
 echo -e "${GREEN}=== Создание swap 1GB ===${NC}"
-if [ "$(swapon --show | wc -l)" -gt 0 ]; then
+if [[ -n "$(swapon --show --noheadings 2>/dev/null | head -n1)" ]]; then
   echo "Swap уже активен, пропускаем"
 else
   fallocate -l 1G /swapfile
   chmod 600 /swapfile
   mkswap /swapfile
   swapon /swapfile
-  grep -q "/swapfile" /etc/fstab || echo "/swapfile none swap sw 0 0" >> /etc/fstab
+  grep -qE '^\s*/swapfile\s' /etc/fstab || echo "/swapfile none swap sw 0 0" >> /etc/fstab
   echo -e "${GREEN}Swap создан и добавлен в fstab${NC}"
 fi
 
