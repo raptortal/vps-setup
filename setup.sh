@@ -1,53 +1,59 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-exec </dev/tty
-
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-read_tty() {
+# Функция для чтения с очисткой буфера
+read_clean() {
   local __var="$1"
   local __val=""
-  IFS= read -r __val || __val=""
-  __val="${__val%$'\r'}"
+  IFS= read -r __val <&0 || __val=""
+  # Удаляем \r и лишние пробелы
+  __val="${__val//$'\r'/}"
+  __val="${__val#"${__val%%[![:space:]]*}"}"
+  __val="${__val%"${__val##*[![:space:]]}"}"
   printf -v "$__var" '%s' "$__val"
 }
 
-read_tty_silent() {
+read_silent() {
   local __var="$1"
   local __val=""
-  IFS= read -r -s __val || __val=""
+  IFS= read -r -s __val <&0 || __val=""
   echo
-  __val="${__val%$'\r'}"
+  __val="${__val//$'\r'/}"
   printf -v "$__var" '%s' "$__val"
 }
 
 ask_yn() {
   local prompt="$1"
-  local line=""
+  local answer=""
+  
+  # Очищаем буфер ввода перед вопросом
+  while read -r -t 0.1 2>/dev/null; do :; done
+  
   while true; do
-    read -r -p "$prompt (y/n): " line || line=""
-    line="${line%$'\r'}"
-    line="${line#"${line%%[![:space:]]*}"}"
-    line="${line:0:1}"
-    case "$line" in
-      y|Y) return 0 ;;
-      n|N) return 1 ;;
+    printf "%s (y/n): " "$prompt"
+    read_clean answer
+    
+    case "${answer,,}" in  # ${answer,,} - lowercase
+      y|yes) return 0 ;;
+      n|no) return 1 ;;
       *) echo "Введите y или n" ;;
     esac
   done
 }
 
+# Главный блок - убираем exec </dev/tty, используем stdin напрямую
 echo -e "${GREEN}Смена пароля root${NC}"
 if ask_yn "Сменить пароль root?"; then
   while true; do
-    echo "Введите новый пароль для root"
-    read_tty_silent ROOTPASS
+    printf "Введите новый пароль для root: "
+    read_silent ROOTPASS
 
-    echo "Повторите пароль"
-    read_tty_silent ROOTPASS2
+    printf "Повторите пароль: "
+    read_silent ROOTPASS2
 
     if [[ -z "${ROOTPASS:-}" ]]; then
       echo -e "${RED}Пароль пустой — нельзя. Попробуйте снова.${NC}"
