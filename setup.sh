@@ -1,25 +1,70 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -Eeuo pipefail
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
+# читаем ввод именно с терминала, даже если скрипт запущен как: wget -O- ... | bash
+TTY_IN="/dev/tty"
+
+read_tty() {
+  # usage: read_tty varname
+  local __var="$1"
+  local __val=""
+  if [[ -r "$TTY_IN" ]]; then
+    IFS= read -r __val < "$TTY_IN" || __val=""
+  else
+    # если совсем нет tty (редко при ssh), пробуем stdin
+    IFS= read -r __val || __val=""
+  fi
+  printf -v "$__var" '%s' "$__val"
+}
+
+read_tty_silent() {
+  # usage: read_tty_silent varname
+  local __var="$1"
+  local __val=""
+  if [[ -r "$TTY_IN" ]]; then
+    IFS= read -r -s __val < "$TTY_IN" || __val=""
+    echo
+  else
+    IFS= read -r -s __val || __val=""
+    echo
+  fi
+  printf -v "$__var" '%s' "$__val"
+}
+
+ask_yn() {
+  # usage: ask_yn "Вопрос"
+  local prompt="$1"
+  local ans=""
+  while true; do
+    echo -n "$prompt (y/n): "
+    read_tty ans
+    ans=$(printf '%s' "$ans" | tr -d '\r' | xargs)
+    ans=${ans:0:1}
+    case "$ans" in
+      y|Y) return 0 ;;
+      n|N) return 1 ;;
+      *) echo "Введите y или n" ;;
+    esac
+  done
+}
+
 echo -e "${GREEN}Смена пароля root${NC}"
-echo "Сменить пароль root? (y/n)"
-read -r CHANGEPASS < /dev/tty
-
-# чистим пробелы и \r, берём первый символ
-CHANGEPASS=$(printf '%s' "$CHANGEPASS" | tr -d '\r' | xargs)
-CHANGEPASS=${CHANGEPASS:0:1}
-
-if [[ "$CHANGEPASS" == [yY] ]]; then
+if ask_yn "Сменить пароль root?"; then
   while true; do
     echo "Введите новый пароль для root"
-    read -r -s ROOTPASS < /dev/tty
-    echo
+    read_tty_silent ROOTPASS
+
     echo "Повторите пароль"
-    read -r -s ROOTPASS2 < /dev/tty
-    echo
+    read_tty_silent ROOTPASS2
+
+    if [[ -z "${ROOTPASS:-}" ]]; then
+      echo -e "${RED}Пароль пустой — нельзя. Попробуйте снова.${NC}"
+      continue
+    fi
 
     if [[ "$ROOTPASS" == "$ROOTPASS2" ]]; then
       echo "root:$ROOTPASS" | chpasswd
@@ -42,36 +87,25 @@ apt install -y speedtest-cli mtr nano htop traceroute iftop nmap curl lsof whois
 echo -e "${GREEN}=== Настройка fail2ban ===${NC}"
 systemctl enable --now fail2ban
 
-
-echo -e "${GREEN}=== Создание swap (1GB) ===${NC}"
+echo -e "${GREEN}=== Создание swap 1GB ===${NC}"
 if [ "$(swapon --show | wc -l)" -gt 0 ]; then
-    echo "Swap уже активен, пропускаем"
+  echo "Swap уже активен, пропускаем"
 else
-    fallocate -l 1G /swapfile
-    chmod 600 /swapfile
-    mkswap /swapfile
-    swapon /swapfile
-    if ! grep -q "/swapfile" /etc/fstab; then
-        echo "/swapfile none swap sw 0 0" >> /etc/fstab
-    fi
-    echo -e "${GREEN}Swap создан и добавлен в fstab${NC}"
+  fallocate -l 1G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  grep -q "/swapfile" /etc/fstab || echo "/swapfile none swap sw 0 0" >> /etc/fstab
+  echo -e "${GREEN}Swap создан и добавлен в fstab${NC}"
 fi
 
-
 echo -e "${GREEN}=== Установка BBR и оптимизация TCP/UDP ===${NC}"
-wget -O bbr-custom.sh https://raw.githubusercontent.com/raptortal/vps-setup/refs/heads/main/bbr-custom.sh && bash bbr-custom.sh
+wget -O bbr-custom.sh https://raw.githubusercontent.com/raptortal/vps-setup/refs/heads/main/bbr-custom.sh
+bash bbr-custom.sh
 
 echo -e "${GREEN}=== Установка завершена ===${NC}"
 
-
-
-echo "Перезагрузить сервер сейчас? (y/n):"
-read -r REBOOT < /dev/tty
-
-REBOOT=$(printf '%s' "$REBOOT" | tr -d '\r' | xargs)
-REBOOT=${REBOOT:0:1}
-
-if [[ "$REBOOT" == [yY] ]]; then
+if ask_yn "Перезагрузить сервер сейчас?"; then
   echo "Перезагрузка..."
   reboot
 else
