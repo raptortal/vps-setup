@@ -5,13 +5,10 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-# Принудительно читаем с терминала
-exec </dev/tty
-
 read_clean() {
   local __var="$1"
   local __val=""
-  IFS= read -r __val || __val=""
+  IFS= read -r __val </dev/tty || __val=""
   __val="${__val//$'\r'/}"
   __val="${__val#"${__val%%[![:space:]]*}"}"
   __val="${__val%"${__val##*[![:space:]]}"}"
@@ -21,7 +18,7 @@ read_clean() {
 read_silent() {
   local __var="$1"
   local __val=""
-  IFS= read -r -s __val || __val=""
+  IFS= read -r -s __val </dev/tty || __val=""
   echo
   __val="${__val//$'\r'/}"
   printf -v "$__var" '%s' "$__val"
@@ -30,9 +27,6 @@ read_silent() {
 ask_yn() {
   local prompt="$1"
   local answer=""
-  
-  # Переоткрываем терминал перед каждым вопросом
-  exec </dev/tty
   
   while true; do
     printf "%s (y/n): " "$prompt"
