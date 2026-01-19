@@ -1,22 +1,16 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+exec </dev/tty
+
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-TTY_IN="/dev/tty"
-
 read_tty() {
   local __var="$1"
   local __val=""
-
-  if [[ -r "$TTY_IN" ]]; then
-    IFS= read -r __val < "$TTY_IN" || __val=""
-  else
-    IFS= read -r __val || __val=""
-  fi
-
+  IFS= read -r __val || __val=""
   __val="${__val%$'\r'}"
   printf -v "$__var" '%s' "$__val"
 }
@@ -24,15 +18,8 @@ read_tty() {
 read_tty_silent() {
   local __var="$1"
   local __val=""
-
-  if [[ -r "$TTY_IN" ]]; then
-    IFS= read -r -s __val < "$TTY_IN" || __val=""
-    echo
-  else
-    IFS= read -r -s __val || __val=""
-    echo
-  fi
-
+  IFS= read -r -s __val || __val=""
+  echo
   __val="${__val%$'\r'}"
   printf -v "$__var" '%s' "$__val"
 }
@@ -40,21 +27,11 @@ read_tty_silent() {
 ask_yn() {
   local prompt="$1"
   local line=""
-
   while true; do
-    echo -ne "$prompt (y/n): "
-
-    if [[ -r "$TTY_IN" ]]; then
-      IFS= read -r line < "$TTY_IN" || line=""
-    else
-      IFS= read -r line || line=""
-    fi
-
-    # убрать CR (Windows) и пробелы
+    read -r -p "$prompt (y/n): " line || line=""
     line="${line%$'\r'}"
     line="${line#"${line%%[![:space:]]*}"}"
     line="${line:0:1}"
-
     case "$line" in
       y|Y) return 0 ;;
       n|N) return 1 ;;
