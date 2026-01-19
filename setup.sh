@@ -4,28 +4,33 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${GREEN}=== Смена пароля root ===${NC}"
-echo "Сменить пароль root? (y/n):"
-read -r CHANGE_PASS < /dev/tty
-if [ "$CHANGE_PASS" = "y" ] || [ "$CHANGE_PASS" = "Y" ]; then
-    while true; do
-        echo "Введите новый пароль для root:"
-        read -s ROOT_PASS < /dev/tty
-        echo
-        echo "Повторите пароль:"
-        read -s ROOT_PASS2 < /dev/tty
-        echo
+echo -e "${GREEN}Смена пароля root${NC}"
+echo "Сменить пароль root? (y/n)"
+read -r CHANGEPASS < /dev/tty
 
-        if [ "$ROOT_PASS" = "$ROOT_PASS2" ]; then
-            echo "root:$ROOT_PASS" | chpasswd
-            echo -e "${GREEN}Пароль изменён${NC}"
-            break
-        else
-            echo -e "${RED}Пароли не совпадают, попробуйте снова${NC}"
-        fi
-    done
+# чистим пробелы и \r, берём первый символ
+CHANGEPASS=$(printf '%s' "$CHANGEPASS" | tr -d '\r' | xargs)
+CHANGEPASS=${CHANGEPASS:0:1}
+
+if [[ "$CHANGEPASS" == [yY] ]]; then
+  while true; do
+    echo "Введите новый пароль для root"
+    read -r -s ROOTPASS < /dev/tty
+    echo
+    echo "Повторите пароль"
+    read -r -s ROOTPASS2 < /dev/tty
+    echo
+
+    if [[ "$ROOTPASS" == "$ROOTPASS2" ]]; then
+      echo "root:$ROOTPASS" | chpasswd
+      echo -e "${GREEN}Пароль изменён${NC}"
+      break
+    else
+      echo -e "${RED}Пароли не совпадают, попробуйте снова${NC}"
+    fi
+  done
 else
-    echo "Смена пароля пропущена"
+  echo "Смена пароля пропущена"
 fi
 
 echo -e "${GREEN}=== Обновление системы ===${NC}"
@@ -62,9 +67,13 @@ echo -e "${GREEN}=== Установка завершена ===${NC}"
 
 echo "Перезагрузить сервер сейчас? (y/n):"
 read -r REBOOT < /dev/tty
-if [ "$REBOOT" = "y" ] || [ "$REBOOT" = "Y" ]; then
-    echo "Перезагрузка..."
-    reboot
+
+REBOOT=$(printf '%s' "$REBOOT" | tr -d '\r' | xargs)
+REBOOT=${REBOOT:0:1}
+
+if [[ "$REBOOT" == [yY] ]]; then
+  echo "Перезагрузка..."
+  reboot
 else
-    echo "Перезагрузка отменена. Рекомендуется перезагрузить позже командой: reboot"
+  echo "Перезагрузка отменена. Рекомендуется перезагрузить позже командой: reboot"
 fi
