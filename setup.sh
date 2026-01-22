@@ -67,7 +67,9 @@ else
 fi
 
 echo -e "${GREEN}=== Обновление системы ===${NC}"
-apt update && apt upgrade -y
+
+export DEBIAN_FRONTEND=noninteractive
+apt update && apt upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
 
 echo -e "${GREEN}=== Установка утилит ===${NC}"
 apt install -y speedtest-cli mtr nano htop traceroute iftop nmap curl lsof whois mc fail2ban wget
