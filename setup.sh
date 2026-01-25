@@ -95,6 +95,8 @@ bash /tmp/bbr-custom.sh </dev/null
 
 echo -e "${GREEN}=== Установка завершена ===${NC}"
 
+while read -r -t 0.1 -n 1; do :; done </dev/tty
+
 if ask_yn "Перезагрузить сервер сейчас?"; then
   echo "Перезагрузка..."
   reboot
