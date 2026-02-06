@@ -56,6 +56,7 @@ if ask_yn "Сменить пароль root?"; then
 
     if [[ "$ROOTPASS" == "$ROOTPASS2" ]]; then
       echo "root:$ROOTPASS" | chpasswd
+      unset ROOTPASS ROOTPASS2
       echo -e "${GREEN}Пароль изменён${NC}"
       break
     else
@@ -77,6 +78,13 @@ apt install -y speedtest-cli mtr nano htop traceroute iftop nmap curl lsof whois
 echo -e "${GREEN}=== Настройка fail2ban ===${NC}"
 systemctl enable --now fail2ban
 
+tee /etc/fail2ban/jail.local >/dev/null <<'EOF'
+[sshd]
+enabled = true
+bantime = 60m
+EOF
+systemctl restart fail2ban
+
 echo -e "${GREEN}=== Создание swap 1GB ===${NC}"
 if [[ -n "$(swapon --show --noheadings 2>/dev/null | head -n1)" ]]; then
   echo "Swap уже активен, пропускаем"
@@ -90,7 +98,7 @@ else
 fi
 
 echo -e "${GREEN}=== Установка BBR и оптимизация TCP/UDP ===${NC}"
-wget -qO /tmp/bbr-custom.sh https://raw.githubusercontent.com/raptortal/vps-setup/main/bbr-custom.sh
+wget -qO /tmp/bbr-custom.sh https://raw.githubusercontent.com/raptortal/vps-setup/main/bbr-custom.sh || { echo -e "${RED}Ошибка загрузки bbr-custom.sh${NC}"; exit 1; }
 bash /tmp/bbr-custom.sh </dev/null
 
 echo -e "${GREEN}=== Установка завершена ===${NC}"
